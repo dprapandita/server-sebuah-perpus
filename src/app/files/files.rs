@@ -1,11 +1,12 @@
 use axum::body::Body;
 use axum::extract::Query;
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use serde::Deserialize;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
+use sha3::{Digest, Sha3_256};
 use slug::slugify;
 use tokio::fs;
 use tokio::fs::OpenOptions;
@@ -13,8 +14,7 @@ use tokio::io::AsyncWriteExt;
 use tracing::info;
 use crate::app::files::validator::{path_is_valid, sanitize_filename};
 use crate::app::hashing::hash::hash_file;
-
-const ALLOWED_EXTENSIONS: &[&str; 6] = &["png", "jpg", "jpeg", "gif", "mp4", "pdf"];
+use crate::routes::{internal_error, not_found_error};
 
 #[derive(Deserialize)]
 struct DownloadParams {
@@ -23,30 +23,64 @@ struct DownloadParams {
     total_chunks: usize,
 }
 
-/// Function that downloads a file using a chunk mechanism
-pub fn download_file(Query(params): Query<DownloadParams>) -> impl IntoResponse {
-    let file_path = path_storage(&params.file_name);
-    let mut file = File::open(&file_path).unwrap_or_else(|_| {
-        panic!("Failed to open file: {}", file_path.display());
-    });
-    let mut buffer = vec![0; params.total_chunks];
-    file.seek(SeekFrom::Start(params.offset)).unwrap();
-    let bytes_read = file.read(&mut buffer).unwrap();
-
-    if bytes_read == 0 {
-        return StatusCode::NO_CONTENT.into_response();
-    }
-
-    let body = Body::from(buffer[..bytes_read].to_vec());
-    Response::builder()
-        .header("Content-Type", "application/octet-stream")
-        .header(
-            "Content-Disposition",
-            format!("attachment; filename={}", params.file_name),
-        )
-        .body(body)
-        .unwrap()
-}
+// Function that downloads a file using a chunk mechanism
+// pub fn download_file(Query(params): Query<DownloadParams>) -> impl IntoResponse {
+//     let file_path = path_storage(&params.file_name);
+//     let mut file = match File::open(file_path) {
+//         Ok(file) => file,
+//         Err(_) => return not_found_error("File not found"),
+//     };
+//
+//     let total_size = match file.metadata() {
+//         Ok(metadata) => metadata.len(),
+//         Err(_) => return not_found_error("File metadata not found"),
+//     };
+//
+//     if params.offset >= total_size {
+//         return not_found_error("Offset out of bounds");
+//     }
+//
+//     if file.seek(SeekFrom::Start(params.offset)).is_err() {
+//         return not_found_error("File seek out of bounds");
+//     }
+//
+//     let mut buffer = vec![0; params.total_chunks];
+//     let bytes_read = match file.read(&mut buffer) {
+//         Ok(bytes) => bytes,
+//         Err(_) => return internal_error("Error reading file"),
+//     };
+//
+//     if bytes_read == 0 {
+//         return not_found_error("Empty file");
+//     }
+//
+//     let mut headers = HeaderMap::new();
+//     headers.insert("Content-Type", HeaderValue::from_static("application/octet-stream"));
+//     headers.insert("Content-Disposition", HeaderValue::from_str(&format!(
+//         "attachment; filename=\"{}\"", params.file_name
+//     )).unwrap());
+//
+//     headers.insert("X-Chunk-Offset", HeaderValue::from_str(&params.offset.to_string()).unwrap());
+//     headers.insert("X-Chunk-Size", HeaderValue::from_str(&params.total_chunks.to_string()).unwrap());
+//     headers.insert("X-Total-Size", HeaderValue::from_str(&total_size.to_string()).unwrap());
+//
+//     Response::builder()
+//         .status(StatusCode::PARTIAL_CONTENT)
+//         .header("Content-Type", "application/octet-stream")
+//         .header(
+//             "Content-Disposition",
+//             format!("attachment; filename=\"{}\"", params.file_name),
+//         )
+//         .header("X-Chunk-Offset", params.offset.to_string())
+//         .header("X-Chunk-Size", bytes_read.to_string())
+//         .body(Body::from(buffer[..bytes_read].to_vec()))
+//         .unwrap_or_else(|_| {
+//             Response::builder()
+//                 .status(StatusCode::INTERNAL_SERVER_ERROR)
+//                 .body(Body::from("Failed to build response"))
+//                 .unwrap()
+//         })
+// }
 
 /// Function that pointing to storage folder
 pub fn path_storage(sub_path: &str) -> PathBuf {
@@ -121,4 +155,14 @@ pub async fn write_file(path: &str, file_name: &str, total_chunks: usize, output
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to remove directory: {}", e)))?;
     Ok((relative_path, hash))
 
+}
+
+/// Generate unique hash for directory
+pub fn generate_chunk_dir_id(title: &str, publisher: &str, filename: &str) -> String {
+    let mut hasher = Sha3_256::new();
+    hasher.update(&title);
+    hasher.update(&publisher);
+    hasher.update(&filename);
+    let hash = hasher.finalize();
+    hex::encode(&hash[..8])
 }

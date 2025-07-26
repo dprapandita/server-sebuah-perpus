@@ -1,40 +1,41 @@
-use crate::controllers::post_controller::*;
-use crate::controllers::user_controller::*;
-use crate::utils::AppState;
+use crate::app::controllers::product_controller::{
+    create_product, delete_product, get_all_products, get_product_by_slug, update_product
+};
+use crate::app::state::AppState;
+use axum::extract::DefaultBodyLimit;
 use axum::http::StatusCode;
 use axum::routing::{get, post};
-use axum::Router;
-use std::sync::Arc;
+use axum::{RequestPartsExt, Router, };
+use sea_orm::{ActiveModelTrait};
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
-use crate::controllers::book_controller::{create_book, get_book, list_books};
-use crate::controllers::category_controller::{create_category, list_categories};
-use crate::controllers::file_upload_controller::upload;
+use crate::app::controllers::user_controller::{create_user, get_user, login_handler};
+
+const CONTENT_LENGTH_LIMIT: usize = 50 * 1024 * 1024;
 
 pub fn routes(state: AppState) -> Router {
-    let book_routes = Router::new()
-        .route("/", get(list_books))
-        .route("/{title}", get(get_book))
-        .route("/upload", post(create_book));
+    let cors = CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any);
 
     Router::new()
         .route("/", get(|| async { "hello world" }))
-        .route("/posts", get(list_posts).post(create_post))
+        .route("/products", get(get_all_products))
+        .route("/product/create", post(create_product))
         .route(
-            "/post/{slug}",
-            get(get_post).put(update_post).delete(delete_post),
+            "/product/{slug}",
+            get(get_product_by_slug).put(update_product).delete(delete_product)
         )
-        .route("/users", get(list_users).post(create_user))
-        .route("/users/creds", post(get_user_credentials))
-        .route("/categories", post(create_category).get(list_categories))
-        .route("/upload", post(upload))
-        .nest("/book", book_routes)
+        .route("/register", post(create_user))
+        .route("/login", post(login_handler))
+        .route("/me", get(get_user))
         // Layer
         .layer(TraceLayer::new_for_http())
-        .with_state(Arc::new(state))
+        .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))
+        .layer(cors)
+        .with_state(state)
 }
 
 pub fn handle_error() -> Router {
-    Router::new().fallback(get(not_found_error("404")))
+    Router::new().fallback(get(not_found_error()))
 }
 
 /* Map any error into a `500 Internal Server Error` */
@@ -46,6 +47,6 @@ where
 }
 
 // Map str into a `404 Internal Server Error`
-pub fn not_found_error(msg: &str) -> (StatusCode, String) {
-    (StatusCode::NOT_FOUND, format!("{msg:?}"))
+pub fn not_found_error() -> (StatusCode, String) {
+    (StatusCode::NOT_FOUND, "Not found".to_string())
 }

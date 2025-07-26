@@ -1,115 +1,35 @@
-POST http://localhost:80/api/item
-Content-Type: multipart/form-data; boundary=WebAppBoundary
-
---WebAppBoundary
-Content-Disposition: form-data; name="field-name"; filename="file.txt"
-
-< ./relative/path/to/local_file.txt
---WebAppBoundary--
-
-###
-### GET request to example server
-GET https://examples.http-client.intellij.net/get
-    ?generated-in=RustRover
-
-###
-POST http://localhost:8000/categories
+POST http://localhost:8000/product/create
 Content-Type: application/json
-Accept: application/json
+
 
 {
-  "name": "Fiksi"
+  "sku": "12332344",
+  "name": "Garam ruqyah",
+  "description": "Garam yang membuat rejeki lancar",
+  "price": 12000,
+  "quantity": 10
 }
 
 ###
-POST http://localhost:8000/posts
+GET http://localhost:8000/product
 Accept: application/json
+
+###
+POST http://localhost:8000/register
 Content-Type: application/json
 
 {
-  "title": "divo test",
-  "text": "Fungsi cognitive",
-  "categories": ["Fiksi", "Sejarah"],
-  "uploader": "divo13f"
+  "name": "divo prapandita",
+  "username": "dvoi84",
+  "email": "divo@example.com",
+  "password": "12345678"
 }
 
 ###
-POST http://localhost:8000/posts
-Accept: application/json
+POST http://localhost:8000/login
 Content-Type: application/json
 
 {
-  "title": "diagamis",
-  "text": "Aku agamis",
-  "categories": ["Fiksi", "Sejarah"],
-  "uploader": "divo13f"
+  "identifier": "dvoi84",
+  "password": "12345678"
 }
-
-###
-PATCH http://localhost:8000/post/1
-Accept: application/json
-Content-Type: application/json
-
-{
-  "title": "divo testi",
-  "text": "keberagaman otak"
-}
-
-###
-DELETE http://localhost:8000/post/3
-Accept: application/json
-Content-Type: application/json
-
-###
-POST http://localhost:8000/users
-Accept: application/json
-Content-Type: application/json
-
-{
-  "username": "divo13f",
-  "name": "divo pa",
-  "password": "12345"
-}
-
-###
-POST http://localhost:8000/users
-Accept: application/json
-Content-Type: application/json
-
-{
-  "username": "div13f",
-  "name": "divo pai",
-  "password": "12345"
-}
-
-###
-POST http://localhost:8000/users/creds
-Accept: application/json
-Content-Type: application/json
-
-{
-  "username": "div13f",
-  "password": "12345"
-}
-### Upload single chunk (tanpa split)
-POST http://localhost:8000/upload
-Content-Type: multipart/form-data; boundary=WebAppBoundary
-
---WebAppBoundary
-Content-Disposition: form-data; name="fileName"
-
-gambar kejar.png
---WebAppBoundary
-Content-Disposition: form-data; name="chunkNumber"
-
-0
---WebAppBoundary
-Content-Disposition: form-data; name="totalChunks"
-
-1
---WebAppBoundary
-Content-Disposition: form-data; name="chunkData"; filename="gambar.png"
-Content-Type: application/octet-stream
-
-< ./gambar.png
---WebAppBoundary--

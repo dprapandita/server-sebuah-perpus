@@ -1,9 +1,6 @@
-This is for my another project, I build this for my flutter project.\
-It was inspired from Google search engine that called microservice,\
-It was based from that, I think.
+This was inspired by aureus from built within laravel
 
-I was using JetBrain RustRover, so I use HttpClient plugin \, 
-and that was an example image called <ins>gambar.png</ins>
+I was using JetBrains RustRover, so I use HttpClient plugin
 
 Step:
 > cargo install
