@@ -5,6 +5,11 @@ use std::path::Path;
 use std::process::Command;
 
 fn main() {
+    if std::env::var("VERCEL").is_ok() {
+        println!("cargo:warning=Build di Vercel, melewati auto-generate entity.");
+        return;
+    }
+    
     dotenv::dotenv().ok();
 
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL tidak ditemukan di .env");
