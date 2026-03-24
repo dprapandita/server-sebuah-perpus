@@ -35,7 +35,7 @@ pub async fn login_handler(
 }
 
 pub async fn get_user(
-    AuthUser(claims): AuthUser,
+    claims: AuthUser,
 ) -> impl IntoResponse {
     (StatusCode::OK, Json(claims))
 }

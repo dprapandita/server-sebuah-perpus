@@ -1,22 +1,7 @@
-POST http://localhost:8000/product/create
-Content-Type: application/json
-
-
-{
-  "sku": "12332344",
-  "name": "Garam ruqyah",
-  "description": "Garam yang membuat rejeki lancar",
-  "price": 12000,
-  "quantity": 10
-}
-
-###
-GET http://localhost:8000/product
-Accept: application/json
-
 ###
 POST http://localhost:8000/register
 Content-Type: application/json
+Accept: application/json
 
 {
   "name": "divo prapandita",
@@ -33,3 +18,66 @@ Content-Type: application/json
   "identifier": "dvoi84",
   "password": "12345678"
 }
+
+> {%
+    client.global.set("token", response.body.token);
+%}
+
+### Get User
+GET http://localhost:8000/me
+Authorization: Bearer {{token}}
+
+> {% 
+    client.global.set("user_id", response.body.id);
+%}
+
+### Upload Real Ebook
+POST http://localhost:8000/book/upload
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="forester-commodore-hornblower.epub"
+Content-Type: application/epub+zip
+
+< ./forester-commodore-hornblower.epub
+--WebAppBoundary--
+
+### Delete a book
+DELETE http://localhost:8000/book/commodore-hornblower
+Authorization: Bearer {{token}}
+
+### GET all books
+GET http://localhost:8000/books
+
+### Get detail book
+GET http://localhost:8000/book/commodore-hornblower
+
+> {% 
+    client.global.set("book_id", response.body.book.id);
+%}
+
+### Get cover book
+GET http://localhost:8000/book/commodore-hornblower/cover
+
+
+### Borrow a book
+POST http://localhost:8000/loans/borrow
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "book_id": "{{book_id}}",
+    "user_id": "{{user_id}}",    "due_date": "2026-03-04"
+}
+
+### Check loan history
+GET http://localhost:8000/loans/history
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Return book
+POST http://localhost:8000/loans/return/243a8a72-99e3-40ed-8b79-9db909492d7e
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Accept: application/json

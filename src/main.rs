@@ -1,14 +1,10 @@
-use crate::routes::{handle_error, routes};
+use crate::routes::{routes};
 use migration::{Migrator, MigratorTrait};
-use sea_orm::{ConnectOptions, Database};
 use std::env;
-use std::time::Duration;
-use tokio::signal;
 use tracing::log::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod app;
-mod respons;
 mod routes;
 mod utils;
 mod core;
@@ -31,7 +27,7 @@ async fn main() {
 
     let server_url = format!("{}:{}", &state.env.host, &state.env.port);
 
-    let router = routes(state).merge(handle_error());
+    let router = routes(state);
     info!("Server was run by {:?}", server_url);
     let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
     axum::serve(listener, router.into_make_service())

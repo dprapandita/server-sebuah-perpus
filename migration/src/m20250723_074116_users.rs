@@ -21,14 +21,42 @@ impl MigrationTrait for Migration {
                     .col(timestamp_with_time_zone_null(Users::UpdatedAt))
                     .to_owned(),
             )
-            .await
+            .await?;
+        manager.create_index(
+            Index::create()
+                .name("idx-username")
+                .table(Users::Table)
+                .col(Users::Username)
+                .to_owned(),
+        ).await?;
+        manager.create_index(
+            Index::create()
+                .name("idx-email")
+                .table(Users::Table)
+                .col(Users::Email)
+                .to_owned(),
+        ).await
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
 
         manager
             .drop_table(Table::drop().table(Users::Table).to_owned())
-            .await
+            .await?;
+        manager.drop_index(
+            Index::drop()
+                .if_exists()
+                .name("idx-username")
+                .table(Users::Table)
+                .to_owned()
+        ).await?;
+        manager.drop_index(
+            Index::drop()
+                .if_exists()
+                .name("idx-email")
+                .table(Users::Table)
+                .to_owned()
+        ).await
     }
 }
 

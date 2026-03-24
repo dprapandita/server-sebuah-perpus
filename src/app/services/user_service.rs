@@ -1,47 +1,90 @@
-use std::sync::Arc;
-use validator::ValidateRequired;
 use crate::app::auth::create_token;
 use crate::app::hashing::hash::{hash_password, verify_password};
-use crate::app::models::user::{LoginUserPayload, RegisterUserPayload, User};
+use crate::app::models::user::{
+    LoginResponse, LoginUserPayload, RegisterUserPayload, User, UserInfo, UserRegisterValue,
+};
 use crate::app::repositories::user_repository::UserRepository;
 use crate::config::config::Config;
 use crate::core::error::AppError;
-use crate::utils::{generate_password, slugify};
+use crate::utils::{generate_password, generate_username};
+use sea_orm::{DatabaseConnection, TransactionTrait};
+use std::sync::Arc;
+use uuid::Uuid;
+use crate::app::repositories::role_repository::RoleRepository;
 
 pub struct UserService {
-    repo: Arc<dyn UserRepository>
+    db: Arc<DatabaseConnection>,
+    repo: Arc<dyn UserRepository>,
+    role_repo: Arc<dyn RoleRepository>,
 }
 
 impl UserService {
-    pub fn new(repo: Arc<dyn UserRepository>) -> UserService {
-        Self { repo }
+    pub fn new(
+        db: Arc<DatabaseConnection>,
+        repo: Arc<dyn UserRepository>,
+        role_repo: Arc<dyn RoleRepository>,
+    ) -> UserService {
+        Self { db, repo, role_repo }
     }
 
     pub async fn create_user(&self, mut payload: RegisterUserPayload) -> Result<User, AppError> {
-        payload.username = slugify(&payload.username);
+        let trx = self.db.begin().await?;
+
+        let final_username = match payload.username {
+            Some(val) => val,
+            None => generate_username()?,
+        };
         payload.email = payload.email.to_lowercase();
-        payload.password = match &payload.password.is_empty() {
-            true => generate_password(payload.password.len().clone()),
-            false => hash_password(&payload.password).unwrap().as_str().to_string()
+        payload.password = if payload.password.is_empty() {
+            generate_password(16)
+        } else {
+            hash_password(&payload.password).map_err(|e| AppError::InternalError(e.to_string()))?
         };
 
-        if self.repo.find_by_unique_identifier(&payload.username).await?.is_some() {
+        if let Some(exist) = self
+            .repo
+            .find_conflict_email_or_username(&trx, &final_username, &payload.email)
+            .await?
+        {
+            if exist.username == final_username {
+                return Err(AppError::DuplicateEntry("Username already exists".into()));
+            }
+            if exist.email == payload.email {
+                return Err(AppError::DuplicateEntry("Email already exists".into()));
+            }
+            // fallback (kalau ada field lain)
             return Err(AppError::DuplicateEntry("User already exists".into()));
         }
+        let user_value = UserRegisterValue {
+            username: final_username,
+            name: payload.name,
+            password: payload.password,
+            email: payload.email,
+        };
 
-        if self.repo.find_by_unique_identifier(&payload.email).await?.is_some() {
-            return Err(AppError::DuplicateEntry("Email already exists".into()));
-        }
+        let mut result = self.repo.create_with_tx(&trx, &user_value).await?;
 
-        self.repo.create(payload).await
+        let role = self.role_repo.find_exact_name("member")
+            .await?
+            .ok_or_else(|| AppError::NotFound)?;
+
+        self.repo.attach_role_tx(&trx, result.id, role.id).await?;
+
+        result.roles = vec![role.name];
+
+        trx.commit().await?;
+
+        Ok(result)
     }
 
     pub async fn login_handler(
         &self,
         payload: LoginUserPayload,
         config: &Config,
-    ) -> Result<String, AppError> {
-        let user = self.repo.find_by_unique_identifier(&payload.identifier)
+    ) -> Result<LoginResponse, AppError> {
+        let user = self
+            .repo
+            .find_by_unique_identifier(&payload.identifier)
             .await?
             .ok_or_else(|| AppError::InvalidCredentials)?;
 
@@ -52,12 +95,29 @@ impl UserService {
             return Err(AppError::InvalidCredentials);
         }
 
-        create_token(user.id, &user.username, config)
-
+        let token = create_token(user.id, &user.username, user.roles.clone(), config)
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+        let user_info = UserInfo {
+            id: user.id,
+            full_name: user.name,
+            username: user.username,
+            email: user.email,
+            roles: user.roles,
+        };
+        Ok(LoginResponse {
+            token,
+            user: user_info,
+        })
     }
 
-    pub async fn find_by_unique_identifier(&self, identifier: &str) -> Result<User, AppError>
-    {
-        self.repo.find_by_unique_identifier(identifier).await?.ok_or(AppError::NotFound)
+    pub async fn find_by_unique_identifier(&self, identifier: &str) -> Result<User, AppError> {
+        self.repo
+            .find_by_unique_identifier(identifier)
+            .await?
+            .ok_or(AppError::NotFound)
+    }
+
+    pub async fn attach_role(&self, user_id: Uuid, role_id: Uuid) -> Result<(), AppError> {
+        self.repo.attach_role(user_id, role_id).await
     }
 }

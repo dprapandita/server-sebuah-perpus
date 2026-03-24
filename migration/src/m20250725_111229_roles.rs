@@ -10,12 +10,12 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Role::Table)
+                    .table(Roles::Table)
                     .if_not_exists()
-                    .col(pk_uuid(Role::Id).uuid())
-                    .col(string(Role::Name))
-                    .col(timestamp_with_time_zone_null(Role::CreatedAt))
-                    .col(timestamp_with_time_zone_null(Role::UpdatedAt))
+                    .col(pk_uuid(Roles::Id).uuid())
+                    .col(string(Roles::Name))
+                    .col(timestamp_with_time_zone_null(Roles::CreatedAt))
+                    .col(timestamp_with_time_zone_null(Roles::UpdatedAt))
                     .to_owned(),
             )
             .await
@@ -24,13 +24,13 @@ impl MigrationTrait for Migration {
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
 
         manager
-            .drop_table(Table::drop().table(Role::Table).to_owned())
+            .drop_table(Table::drop().table(Roles::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum Role {
+pub enum Roles {
     Table,
     Id,
     Name,

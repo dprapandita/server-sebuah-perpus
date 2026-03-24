@@ -1,5 +1,5 @@
 [package]
-name = "erp-backend"
+name = "sebuah-perpus"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,8 +12,7 @@ entity = { path = "entity" }
 
 axum = { version = "0.8.1", features = ["tokio", "tracing", "macros", "multipart"] }
 infer = "0.19.0"
-tokio = { version = "1.43.0", features = ["full"]}
-tower = {version = "0.5.2", features = ["full"]}
+tokio = { version = "1.43.0", features = ["full", "io-util"]}
 tower-http = { version = "0.6.2", features = ["tracing", "trace", "cors", "limit"] }
 chrono = { version = "0.4.41" }
 slug = { version = "0.1.6"  }
@@ -28,7 +27,8 @@ uuid = { version = "1.17.0", features = ["v4"] }
 jsonwebtoken = "9.3.1"
 async-trait = "0.1.88"
 validator = { version = "0.20.0", features = ["derive"] }
-
+epub = "2.1.5"
+ammonia = "4.1.2"
 bcrypt = "0.17.0"
 rand = { version = "0.9.1", features = ["thread_rng", "std"] }
 argon2 = { version = "0.5.3", features = ["std", "rand"] }
@@ -36,3 +36,12 @@ sha3 = "0.10.8"
 hex = "0.4.3"
 regex = "1.11.1"
 axum-extra = { version = "0.10.1", features = ["typed-header"] }
+tokio-util = { version = "0.7.18", features = ["io-util"] }
+
+# Vercel requirements
+vercel_runtime = "2.1.1"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = 3

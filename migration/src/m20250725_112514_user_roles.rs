@@ -1,6 +1,6 @@
 use sea_orm_migration::{prelude::*, schema::*};
 use crate::m20250723_074116_users::Users;
-use crate::m20250725_111229_roles::Role;
+use crate::m20250725_111229_roles::Roles;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -33,7 +33,7 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .from(UserRoles::Table, UserRoles::RoleId)
-                            .to(Role::Table, Role::Id)
+                            .to(Roles::Table, Roles::Id)
                             .on_delete(ForeignKeyAction::Cascade)
                             .on_update(ForeignKeyAction::Cascade),
                     )
