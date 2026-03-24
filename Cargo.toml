@@ -24,22 +24,25 @@ serde_json = "1.0.140"
 sea-orm = { version = "1.1.10", features = ["sqlx-postgres", "runtime-tokio", "macros", "with-uuid", "with-chrono"] }
 anyhow = "1.0.98"
 uuid = { version = "1.17.0", features = ["v4"] }
-jsonwebtoken = "9.3.1"
+jsonwebtoken = "10.3.0"
 async-trait = "0.1.88"
 validator = { version = "0.20.0", features = ["derive"] }
 epub = "2.1.5"
 ammonia = "4.1.2"
-bcrypt = "0.17.0"
-rand = { version = "0.9.1", features = ["thread_rng", "std"] }
+bcrypt = "0.19.0"
+rand = { version = "0.10.0", features = ["thread_rng", "std"] }
 argon2 = { version = "0.5.3", features = ["std", "rand"] }
 sha3 = "0.10.8"
 hex = "0.4.3"
 regex = "1.11.1"
-axum-extra = { version = "0.10.1", features = ["typed-header"] }
+axum-extra = { version = "0.12.5", features = ["typed-header"] }
 tokio-util = { version = "0.7.18", features = ["io-util"] }
 
 # Vercel requirements
-vercel_runtime = "2.1.1"
+vercel_runtime = { version = "2.1.1", features = ["axum"] }
+
+[profile.dev]
+opt-level = 0
 
 [profile.release]
 codegen-units = 1

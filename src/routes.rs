@@ -10,7 +10,6 @@ use crate::app::controllers::role_controller::{create_role, list_roles};
 use crate::app::controllers::user_controller::{create_user, get_user, login_handler};
 use crate::app::state::AppState;
 use axum::extract::DefaultBodyLimit;
-use axum::http::StatusCode;
 use axum::routing::{get, post};
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
