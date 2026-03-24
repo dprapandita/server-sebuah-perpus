@@ -41,6 +41,10 @@ tokio-util = { version = "0.7.18", features = ["io-util"] }
 # Vercel requirements
 vercel_runtime = { version = "2.1.1", features = ["axum"] }
 
+[[bin]]
+name = "index"
+path = "api/index.rs"
+
 [profile.dev]
 opt-level = 0
 
