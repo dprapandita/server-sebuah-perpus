@@ -1,0 +1,8 @@
+{
+  "builds": [
+    {
+      "src": "api/**/*.rs",
+      "use": "vercel-rust"
+    }
+  ]
+}

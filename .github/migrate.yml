@@ -1,0 +1,30 @@
+name: Auto Migrate Database
+
+on:
+  push:
+    branches:
+      - main # Workflow ini hanya dipicu jika ada push atau merge ke branch main
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+
+      - name: Install SeaORM CLI
+        # Ini akan mengunduh alat migrasi SeaORM ke mesin virtual GitHub
+        run: cargo install sea-orm-cli
+
+      - name: Jalankan Migrasi
+        env:
+          # Variabel ini disedot dari menu rahasia GitHub, bukan dari file .env
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # Parameter -d menunjuk ke folder tempat file migrasimu berada
+        run: sea-orm-cli migrate up -u $DATABASE_URL -d migration

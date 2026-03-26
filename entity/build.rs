@@ -5,10 +5,17 @@ use std::path::Path;
 use std::process::Command;
 
 fn main() {
-    dotenv::dotenv().ok();
+    let _ = dotenv::dotenv().ok();
 
-    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL tidak ditemukan di .env");
-
+    // Ambil URL dengan aman menggunakan match, BUKAN unwrap/expect
+    let db_url = match std::env::var("DATABASE_URL") {
+        Ok(url) => url,
+        Err(_) => {
+            // Jika masuk ke sini (seperti saat di Vercel), script langsung berhenti DENGAN SUKSES
+            println!("cargo:warning=DATABASE_URL tidak terdeteksi. Melewati generate entity.");
+            return; 
+        }
+    };
     let out_dir = Path::new("src/generated");
 
     if out_dir.exists() {
