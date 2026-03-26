@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: admin_perpus
+      POSTGRES_PASSWORD: perpus@26
+      POSTGRES_DB: db_perpus
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data # Mengamankan data tabel agar tidak hilang saat restart
+
+  api_rust:
+    build: . # Membaca Dockerfile yang kita buat di Langkah 1
+    restart: always
+    depends_on:
+      - database # Memastikan database nyala duluan sebelum aplikasi Rust jalan
+    environment:
+      # URL otomatis mengarah ke nama service 'database' di atas
+      DATABASE_URL: postgres://admin_perpus:perpus@26@database:5432/db_perpus
+      HOST_MODE: production
+    ports:
+      - "3000:3000"
+    volumes:
+      # INI PENTING: Menyimpan file upload gambar ke hardisk VPS
+      - ./storage_data:/app/storage
+
+volumes:
+  pgdata:

@@ -1,4 +1,4 @@
-use slug::slugify;
+use crate::utils::slugify;
 use std::path::{Component, Path};
 
 /// Max ukuran per chunk: 2 MB

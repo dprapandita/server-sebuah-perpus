@@ -1,8 +1,7 @@
 use anyhow::Context;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier, RECOMMENDED_SALT_LEN};
-use rand::rand_core::OsRng;
-use rand::TryRngCore;
+use rand::TryRng;
 use sha3::digest::DynDigest;
 use sha3::Digest;
 
@@ -65,10 +64,9 @@ pub fn hash_password(password: &str) -> anyhow::Result<String> {
 
             let params =
                 argon2::Params::new(mem, time, thread, None).expect("Invalid Argon2 parameters");
-            let mut random_salt = OsRng;
 
             let mut bytes = [0u8; RECOMMENDED_SALT_LEN];
-            random_salt.try_fill_bytes(&mut bytes)?;
+            rand::rng().try_fill_bytes(&mut bytes)?;
             let hasher = Argon2::new(argon2::Algorithm::Argon2id, argon2::Version::V0x13, params);
             let salt = SaltString::encode_b64(&mut bytes)?;
             let hash = hasher

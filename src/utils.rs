@@ -1,9 +1,9 @@
-use std::sync::OnceLock;
+use crate::core::error::AppError;
 use chrono::NaiveDateTime;
 use rand::distr::Alphanumeric;
-use rand::Rng;
+use rand::RngExt;
 use regex::Regex;
-use crate::core::error::AppError;
+use std::sync::OnceLock;
 
 pub fn slugify(text: &str) -> String {
     static RE: OnceLock<Regex> = OnceLock::new();
