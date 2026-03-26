@@ -5,6 +5,10 @@ use std::path::Path;
 use std::process::Command;
 
 fn main() {
+    if env::var("PROFILE").unwrap_or_default() == "release" {
+        println!("cargo:warning=Mode Release terdeteksi. Melewati auto-generate sea-orm-cli.");
+        return;
+    }
     let _ = dotenv::dotenv().ok();
 
     // Ambil URL dengan aman menggunakan match, BUKAN unwrap/expect
