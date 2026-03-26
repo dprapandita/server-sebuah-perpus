@@ -28,5 +28,18 @@ services:
       # INI PENTING: Menyimpan file upload gambar ke hardisk VPS
       - ./storage_data:/app/storage
 
+  web_server:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80" # Pintu masuk standar web internet
+    volumes:
+      # Menyambungkan file konfigurasi Nginx
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Menyambungkan Nginx ke folder gambar agar bisa dikirim langsung
+      - ./storage_data:/app/storage:ro
+    depends_on:
+      - api_rust # Nginx baru nyala kalau Rust sudah nyala
+
 volumes:
   pgdata:
