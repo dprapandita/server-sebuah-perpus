@@ -1,7 +1,4 @@
-This was inspired by aureus from built within laravel
-
-I was using JetBrains RustRover, so I use HttpClient plugin
-
+This was server for my app C# \
 Step:
 > cargo install
 
