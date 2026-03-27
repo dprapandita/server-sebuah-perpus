@@ -3,6 +3,7 @@ use migration::{Migrator, MigratorTrait};
 use std::env;
 use tracing::log::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use sebuah_perpus::mock::seeder::seed_all;
 
 mod app;
 mod routes;
@@ -24,6 +25,12 @@ async fn main() {
     Migrator::up(&state.database_connection, None).await
         .expect("Gagal menjalankan migrasi database");
     println!("✅ Migrasi database berhasil dijalankan.");
+
+    if env::var("SEEDING_ON_STARTUP").unwrap_or_default() == "true" {
+        seed_all(&state.database_connection).await
+            .expect("Gagal menjalankan seeding database");
+        tracing::info!("Seed all database successfully.");
+    }
 
     let server_url = format!("{}:{}", &state.env.host, &state.env.port);
 

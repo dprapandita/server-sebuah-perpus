@@ -23,6 +23,18 @@ Content-Type: application/json
     client.global.set("token", response.body.token);
 %}
 
+### Login admin user
+POST http://localhost:8000/login
+Content-Type: application/json
+
+{
+  "identifier": "superadmin",
+  "password": "perpus"
+}
+> {%
+    client.global.set("token", response.body.token)
+ %}
+
 ### Get User
 GET http://localhost:8000/me
 Authorization: Bearer {{token}}

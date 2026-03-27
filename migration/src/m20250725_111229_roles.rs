@@ -13,7 +13,7 @@ impl MigrationTrait for Migration {
                     .table(Roles::Table)
                     .if_not_exists()
                     .col(pk_uuid(Roles::Id).uuid())
-                    .col(string(Roles::Name))
+                    .col(string_uniq(Roles::Name).unique_key())
                     .col(timestamp_with_time_zone_null(Roles::CreatedAt))
                     .col(timestamp_with_time_zone_null(Roles::UpdatedAt))
                     .to_owned(),
