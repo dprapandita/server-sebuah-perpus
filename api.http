@@ -24,7 +24,7 @@ Content-Type: application/json
 %}
 
 ### Login admin user
-POST http://localhost:8000/login
+POST http://20.239.251.132:80/login
 Content-Type: application/json
 
 {

@@ -2,10 +2,7 @@ use crate::app::hashing::hash;
 use crate::core::error::AppError;
 use crate::mock::factory::{RoleFactory, UserFactory};
 use sea_orm::sea_query::OnConflict;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, DatabaseTransaction, EntityTrait,
-    QueryFilter, Set, TransactionTrait,
-};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, DatabaseTransaction, DbErr, EntityTrait, QueryFilter, Set, TransactionTrait};
 use uuid::Uuid;
 
 pub async fn seed_all(db: &DatabaseConnection) -> Result<(), AppError> {
@@ -89,14 +86,26 @@ pub async fn seed_roles(db: &DatabaseTransaction) -> Result<(), AppError> {
 
     // Insert semua sekaligus.
     // Jika nama role sudah ada di database, abaikan saja (do_nothing).
-    entity::roles::Entity::insert_many(role_models)
+    let result_seeding = entity::roles::Entity::insert_many(role_models)
         .on_conflict(
             OnConflict::column(entity::roles::Column::Name)
                 .do_nothing()
                 .to_owned(),
         )
         .exec(db)
-        .await?;
+        .await;
+
+    match result_seeding {
+        Ok(_) => {
+            println!("✅ Seeding berhasil: Role baru ditambahkan ke database.");
+        }
+        Err(DbErr::RecordNotInserted) => {
+            println!("✅ Seeding dilewati: Semua role sudah tersedia di database.");
+        }
+        Err(e) => {
+            panic!("❌ Gagal menjalankan seeding database: {}", e);
+        }
+    }
 
     Ok(())
 }
